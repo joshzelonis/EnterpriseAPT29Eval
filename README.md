@@ -12,6 +12,7 @@ I tried to code this to be as accessible as made sense. Read through the class t
 
 ## Requirements
 python3
+
 curl (to download the json data)
 
 ## Installation
@@ -32,6 +33,6 @@ $ ./pull_scores.sh
 ## Thanks
 I want to thank MITRE for the ATT&CK Framework and for performing these open and transparent evaluations.
 
-I also want to thank the 21 vendors who participated in this evaluation for providing transparency to the efficacy of their products using this evaluation. 
+I also want to thank the 21 vendors who participated in this evaluation for providing transparency into the efficacy of their products. 
 
 You are all making the world more secure.
