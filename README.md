@@ -22,7 +22,7 @@ $ git clone https://github.com/joshzelonis/EnterpriseAPT29Eval.git
 ```
 From the root of this project, install the PIP requirements.
 ```
-$ pip install -r requirements.txt
+$ pip3 install -r requirements.txt
 ```
 Then use my incredibly (in)elegant curl script to pull down the vendor scores.
 ```
