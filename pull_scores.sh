@@ -1,7 +1,6 @@
 #!/bin/bash
 #
 
-mkdir data
 cd data/
 curl -O https://attackevals.mitre.org/Bitdefender.1.APT29.1_Results.json
 curl -O https://attackevals.mitre.org/CrowdStrike.1.APT29.1_Results.json
