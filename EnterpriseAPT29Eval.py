@@ -175,8 +175,7 @@ def readout(results):
 
 
 def write_xlsx(dfs, columns=['SubStep', 'Procedure', 'Tactic', 'TechniqueId', 'TechniqueName', 'Detection', 'Modifiers', 'MSSP']):
-#	writer = pd.ExcelWriter(f'apt29eval.xlsx', engine='xlsxwriter')
-	writer = pd.ExcelWriter(f'apt29eval.xlsx')
+	writer = pd.ExcelWriter(f'apt29eval.xlsx', engine='xlsxwriter')
 	for vendor in dfs.keys():
 		dfs[vendor].flattenTactics()
 		dfs[vendor].sortSubSteps(cleanup=True)
