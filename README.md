@@ -33,6 +33,19 @@ Finally, run the thing!
 ```
 $ python3 EnterpriseAPT29Eval.py 
 ```
+## FAQ
+Q: Why do you find more 'None' values than are reported when I grep for it?
+
+A: There are instances where the scoring will show an MSSP detection and no other detection. From what I can tell, this impacts many of the score sheets (i.e. - SentinelOne SubStep 13.B.1) and leads to some oddities in the data:
+ - The number of 'None' detections I report in the xlsx may be higher than what you get when you grep these files.
+ - Kaspersky had 124.56% detection rate by their MSSP versus the telemetry they were collecting with the product.
+ - Also anticipate this behavior if all the detections came in due to configuration changes as these are likely ignored (see next).
+
+
+Q: Why don't you count config changes?
+
+A: I'm trying to identify what a majority of companies would be looking at when trying to do a detection. I do actually count detections that include both versions of config changes and throw this in a property called 'dfir' because I expect this level of tuning would likely only be in use during an incident response or 
+
 
 ## Thanks
 I want to thank MITRE for the ATT&CK Framework and for performing these open and transparent evaluations.

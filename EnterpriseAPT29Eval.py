@@ -164,8 +164,12 @@ class EnterpriseAPT29Eval():
 
 def readout(results):
 	print(f'{results.vendor}\n---------------------------')
-	print(f'The MSSP service was able to detect {results.mssp} of the {results.dfir} events the product was able')
-	print(f'to detect under an ideal configuration, for an efficacy of {(results.mssp * 100)/results.dfir :.2f}%')
+	if results.mssp > 0:
+		print(f'The MSSP service was able to detect {results.mssp} of the {results.dfir} events the product was able')
+		print(f'to detect under a dfir configuration, for an efficacy of {(results.mssp * 100)/results.dfir :.2f}%')
+	else:
+		print(f'The vendor doesn\'t appear to have been leveraging an MSSP service. It should')
+		print(f'still be noted that a dfir configuration identified {results.dfir} events.')
 
 	print(f'\nThe product provided visibility out of the box for {results.visibility} of {results.steps} steps, for an')
 	print(f'efficacy of {(results.visibility * 100)/results.steps :.2f}%')
