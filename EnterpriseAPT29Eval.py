@@ -18,8 +18,13 @@ class EnterpriseAPT29Eval():
 		self._steps = None
 		self._dfir = None
 		self._mssp = None
+		self._scores = None
 		self._visibility = None
 		self._correlated = None
+		self._actionability = None
+		self._alerts = None
+		self._alerts_correlated = None
+		self._uncorrelated_alert_steps = None
 
 
 	# sort and reindex dataframe by substep
@@ -125,15 +130,78 @@ class EnterpriseAPT29Eval():
 
 
 	def score_detections(self):
+		self.sortSubSteps()
 		if self._visibility == None:
 			self.flattenDetections(confchange=False)
 			misses = pd.value_counts(self._df['Detection'].values)['None']
 			self._visibility = self._steps - misses
 		if self._correlated == None:
 			self._correlated = 0
+			self._alerts = 0
+			self._alerts_correlated = 0
+			self._uncorrelated_alert_steps = 0
+			self._techniques = 0
+			arr = []
 			for index, row in self._df.iterrows():
 				if 'Correlated' in row['Modifiers']:
 					self._correlated += 1
+				if 'Alert' in row['Modifiers']:
+					self._alerts += 1
+					if 'Correlated' in row['Modifiers']:
+						self._alerts_correlated += 1
+					elif row['Major'] not in arr:
+						self._uncorrelated_alert_steps += 1
+						arr.append(row['Major'])
+					if row['Detection'] == 'Technique':
+						self._techniques += 1
+		if self._actionability == None:
+			self._efficiency = 1 - (self._alerts/self._steps)
+			if self._alerts > 0:
+				self._quality = (self._alerts_correlated + self._uncorrelated_alert_steps + self._techniques)/(2 * self._alerts) 
+			else:
+				self._quality = 0
+			self._actionability = self._efficiency * self._quality
+		if self._scores == None:
+			self._scores = {'vendor'       : self._vendor,		\
+							'alerts'       : self._alerts,		\
+							'visibility'   : self._visibility/self._steps,		\
+							'correlation'  : self._correlated/self._visibility,	\
+							'efficiency'   : self._efficiency,	\
+							'quality'      : self._quality,		\
+							'actionability': self._actionability}
+
+
+	def get_scores(self):
+		if self._scores == None:
+			self.score_detections()
+		return self._scores
+
+	scores = property(get_scores)
+
+
+	def get_actionability(self):
+		if self._actionability == None:
+			self.score_detections()
+		return self._actionability
+
+	actionability = property(get_actionability)
+
+
+	def get_efficiency(self):
+		if self._efficiency == None:
+			self.score_detections()
+		return self._efficiency
+
+	efficiency = property(get_efficiency)
+
+
+	def get_quality(self):
+		if self._quality == None:
+			self.score_detections()
+		return self._quality
+
+	quality = property(get_quality)
+
 
 	def get_visibility(self):
 		if self._visibility == None:
@@ -150,10 +218,19 @@ class EnterpriseAPT29Eval():
 
 	correlated = property(get_correlated)
 
+
 	def get_vendor(self):
 		return self._vendor
 
 	vendor = property(get_vendor)
+
+
+	def get_alerts(self):
+		if self._alerts == None:
+			self.score_detections()
+		return self._alerts
+
+	alerts = property(get_alerts)
 
 
 	def get_dataframe(self):
@@ -177,9 +254,29 @@ def readout(results):
 	print(f'\nThe product was able to correlate {results.correlated} of the {results.visibility} events it had visibility into')
 	print(f'out of the box, for an efficacy of {(results.correlated * 100)/results.visibility :.2f}%\n')
 
+	if results.alerts > 0:
+		print(f'The product generated {results.alerts} distinct alerts for an efficiency of {results.efficiency * 100 :.2f}%, with an')
+		print(f'alert quality of {results.quality * 100:.2f}%, for an overall alert actionability metric of {results.quality * results.efficiency * 100 :.2f}%\n')
+	else:
+		print(f'The product was unable to generate any alerts.\n')
+
 
 def write_xlsx(dfs, columns=['SubStep', 'Procedure', 'Tactic', 'TechniqueId', 'TechniqueName', 'Detection', 'Modifiers', 'MSSP']):
 	writer = pd.ExcelWriter(f'apt29eval.xlsx', engine='xlsxwriter')
+	results = pd.DataFrame(columns=['vendor', 		\
+									'alerts',		\
+                            		'visibility',	\
+                            		'correlation',  \
+                            		'efficiency',	\
+                            		'quality',		\
+                            		'actionability'])
+
+	# Write out results tab
+	for vendor in dfs.keys():
+		results = results.append([dfs[vendor].scores], ignore_index=True)
+	results.to_excel(writer, sheet_name='Results', index=False)
+
+	# Write out individual vendor tabs
 	for vendor in dfs.keys():
 		dfs[vendor].flattenTactics()
 		dfs[vendor].sortSubSteps(cleanup=True)
