@@ -8,9 +8,9 @@ import os
 
 class EnterpriseAPT29Eval():
 	def __init__(self, filename):
-		self._vendor = filename.split('/', 2)[2]
+		self._vendor = filename.split(os.sep, 2)[-1]
 		self._vendor = self._vendor.split('.', 1)[0]
-		with open(filename, 'r') as infile:
+		with open(filename, 'r', encoding='utf-8') as infile:
 		    data=infile.read()
 
 		self._obj = json.loads(data)['Techniques']
@@ -286,7 +286,7 @@ def write_xlsx(dfs, columns=['SubStep', 'Procedure', 'Tactic', 'TechniqueId', 'T
 if __name__ == '__main__':
 	results = {}
 
-	for infile in sorted(glob.glob(os.path.join('./data/', '*json'))):
+	for infile in sorted(glob.glob(os.path.join('data', '*json'))):
 		obj = EnterpriseAPT29Eval(infile)
 		readout(obj)
 		results.update({obj.vendor: obj})
