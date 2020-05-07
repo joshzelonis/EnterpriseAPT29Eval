@@ -45,6 +45,10 @@ class EnterpriseAPT29Eval():
 		self._df['Tactics' if inplace else 'Tactic'] = self._df['Tactics'].apply(lambda x: x[0]['TacticName'] if len(x)==1 else x[0]['TacticName'] + ', ' + x[1]['TacticName'])
 
 
+	def findPowerShell(self):
+#		self._df['PowerShell'] = self._df.apply(lambda x: True if 'powershell' in x['Procedures'].lower() else False)
+		self._df['PowerShell'] = self._df['Procedure'].apply(lambda x: True if 'powershell' in x.lower() else False)
+
 	# row level operations when flattening detections
 	def _flattenDetections(self, detections, confchange=False):
 		ret, mods, mssp = 'None', [], False
@@ -84,6 +88,7 @@ class EnterpriseAPT29Eval():
 	def get_steps(self):
 			
 		if self._steps == None:
+			self.findPowerShell()
 			self.flattenDetections(confchange=True)
 			removed = pd.value_counts(self._df['Detection'].values)['N/A']
 			self._steps = len(self._df.index) - removed
@@ -141,6 +146,7 @@ class EnterpriseAPT29Eval():
 			self._alerts_correlated = 0
 			self._uncorrelated_alert_steps = 0
 			self._techniques = 0
+			self._powerfail = 0
 			arr = []
 			for index, row in self._df.iterrows():
 				if 'Correlated' in row['Modifiers']:
@@ -154,6 +160,8 @@ class EnterpriseAPT29Eval():
 						arr.append(row['Major'])
 					if row['Detection'] == 'Technique':
 						self._techniques += 1
+				if 'powershell' in row['Procedure'].lower() and row['Detection'] == 'None':
+					self._powerfail +=1
 		if self._actionability == None:
 			self._efficiency = 1 - (self._alerts/self._steps)
 			if self._alerts > 0:
@@ -162,12 +170,13 @@ class EnterpriseAPT29Eval():
 				self._quality = 0
 			self._actionability = self._efficiency * self._quality
 		if self._scores == None:
-			self._scores = {'vendor'       : self._vendor,		\
-							'alerts'       : self._alerts,		\
+			self._scores = {'vendor'	   : self._vendor,		\
+							'alerts'	   : self._alerts,		\
+							'powerfail'    : self._powerfail,	\
 							'visibility'   : self._visibility/self._steps,		\
 							'correlation'  : self._correlated/self._visibility,	\
 							'efficiency'   : self._efficiency,	\
-							'quality'      : self._quality,		\
+							'quality'	   : self._quality,		\
 							'actionability': self._actionability}
 
 
@@ -261,7 +270,7 @@ def readout(results):
 		print(f'The product was unable to generate any alerts.\n')
 
 
-def write_xlsx(dfs, columns=['SubStep', 'Procedure', 'Tactic', 'TechniqueId', 'TechniqueName', 'Detection', 'Modifiers', 'MSSP']):
+def write_xlsx(dfs, columns=['SubStep', 'Procedure', 'Tactic', 'TechniqueId', 'TechniqueName', 'Detection', 'Modifiers', 'MSSP', 'PowerShell']):
 	writer = pd.ExcelWriter(f'apt29eval.xlsx', engine='xlsxwriter')
 	results = pd.DataFrame(columns=['vendor', 		\
 									'alerts',		\
