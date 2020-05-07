@@ -146,7 +146,7 @@ class EnterpriseAPT29Eval():
 			self._alerts_correlated = 0
 			self._uncorrelated_alert_steps = 0
 			self._techniques = 0
-			self._powerfail = 0
+			self._powerfails = 0
 			arr = []
 			for index, row in self._df.iterrows():
 				if 'Correlated' in row['Modifiers']:
@@ -161,7 +161,7 @@ class EnterpriseAPT29Eval():
 					if row['Detection'] == 'Technique':
 						self._techniques += 1
 				if 'powershell' in row['Procedure'].lower() and row['Detection'] == 'None':
-					self._powerfail +=1
+					self._powerfails +=1
 		if self._actionability == None:
 			self._efficiency = 1 - (self._alerts/self._steps)
 			if self._alerts > 0:
@@ -172,7 +172,7 @@ class EnterpriseAPT29Eval():
 		if self._scores == None:
 			self._scores = {'vendor'	   : self._vendor,		\
 							'alerts'	   : self._alerts,		\
-							'powerfail'    : self._powerfail,	\
+							'powerfails'    : self._powerfails,	\
 							'visibility'   : self._visibility/self._steps,		\
 							'correlation'  : self._correlated/self._visibility,	\
 							'efficiency'   : self._efficiency,	\
