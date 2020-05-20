@@ -23,6 +23,7 @@ class EnterpriseAPT29Eval():
 		self._correlated = None
 		self._actionability = None
 		self._alerts = None
+		self._telemetry = None
 		self._alerts_correlated = None
 		self._uncorrelated_alert_steps = None
 
@@ -89,7 +90,7 @@ class EnterpriseAPT29Eval():
 			
 		if self._steps == None:
 			self.findPowerShell()
-			self.flattenDetections(confchange=True)
+			self.flattenDetections(confchange=False)
 			removed = pd.value_counts(self._df['Detection'].values)['N/A']
 			self._steps = len(self._df.index) - removed
 		return self._steps
@@ -104,7 +105,7 @@ class EnterpriseAPT29Eval():
 			self.get_steps()
 		if self._dfir == None:
 			misses = pd.value_counts(self._df['Detection'].values)['None']
-			self._dfir = self._steps - misses
+			self._dfir = self.steps - misses
 
 	def get_dfir(self):
 		if self._dfir == None:
@@ -139,7 +140,7 @@ class EnterpriseAPT29Eval():
 		if self._visibility == None:
 			self.flattenDetections(confchange=False)
 			misses = pd.value_counts(self._df['Detection'].values)['None']
-			self._visibility = self._steps - misses
+			self._visibility = self.steps - misses
 		if self._correlated == None:
 			self._correlated = 0
 			self._alerts = 0
@@ -163,7 +164,7 @@ class EnterpriseAPT29Eval():
 				if 'powershell' in row['Procedure'].lower() and row['Detection'] == 'None':
 					self._powerfails +=1
 		if self._actionability == None:
-			self._efficiency = 1 - (self._alerts/self._steps)
+			self._efficiency = 1 - (self._alerts/self.steps)
 			if self._alerts > 0:
 				self._quality = (self._alerts_correlated + self._uncorrelated_alert_steps + self._techniques)/(2 * self._alerts) 
 			else:
@@ -172,8 +173,9 @@ class EnterpriseAPT29Eval():
 		if self._scores == None:
 			self._scores = {'vendor'	   : self._vendor,		\
 							'alerts'	   : self._alerts,		\
+							'telemetry'    : self._visibility - self._alerts,	\
 							'powerfails'    : self._powerfails,	\
-							'visibility'   : self._visibility/self._steps,		\
+							'visibility'   : self._visibility/self.steps,		\
 							'correlation'  : self._correlated/self._visibility,	\
 							'efficiency'   : self._efficiency,	\
 							'quality'	   : self._quality,		\
@@ -274,6 +276,7 @@ def write_xlsx(dfs, columns=['SubStep', 'Procedure', 'Tactic', 'TechniqueId', 'T
 	writer = pd.ExcelWriter(f'apt29eval.xlsx', engine='xlsxwriter')
 	results = pd.DataFrame(columns=['vendor', 		\
 									'alerts',		\
+									'telemetry',	\
                             		'visibility',	\
                             		'correlation',  \
                             		'efficiency',	\
@@ -297,7 +300,7 @@ if __name__ == '__main__':
 
 	for infile in sorted(glob.glob(os.path.join('data', '*json'))):
 		obj = EnterpriseAPT29Eval(infile)
-		readout(obj)
+#		readout(obj)
 		results.update({obj.vendor: obj})
 
 	write_xlsx(results)
