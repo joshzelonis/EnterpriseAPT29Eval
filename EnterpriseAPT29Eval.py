@@ -14,7 +14,7 @@ class EnterpriseAPT29Eval():
 		    data=infile.read()
 
 		self._obj = json.loads(data)['Techniques']
-		self._df = pd.json_normalize(self._obj,'Steps', ['TechniqueId','TechniqueName', 'Tactics'])
+		self._df = pd.json_normalize(self._obj,'Steps', ['TechniqueId','TechniqueName', 'Tactics'], record_prefix='_')
 		self._steps = None
 		self._dfir = None
 		self._mssp = None
@@ -27,10 +27,11 @@ class EnterpriseAPT29Eval():
 		self._alerts_correlated = None
 		self._uncorrelated_alert_steps = None
 
+		
 
 	# sort and reindex dataframe by substep
 	def sortSubSteps(self, cleanup=False):
-		ver = self._df['SubStep'].str.split('.', expand=True)
+		ver = self._df['_SubStep'].str.split('.', expand=True)
 		self._df['Major'] = ver[0].astype(int)
 		self._df['Alpha'] = ver[1]
 		self._df['Minor'] = ver[2].astype(int)
@@ -48,7 +49,7 @@ class EnterpriseAPT29Eval():
 
 	def findPowerShell(self):
 #		self._df['PowerShell'] = self._df.apply(lambda x: True if 'powershell' in x['Procedures'].lower() else False)
-		self._df['PowerShell'] = self._df['Procedure'].apply(lambda x: True if 'powershell' in x.lower() else False)
+		self._df['PowerShell'] = self._df['_Procedure'].apply(lambda x: True if 'powershell' in x.lower() else False)
 
 	# row level operations when flattening detections
 	def _flattenDetections(self, detections, confchange=False):
@@ -80,7 +81,7 @@ class EnterpriseAPT29Eval():
 
 
 	def flattenDetections(self, inplace=False, confchange=False):
-		detections = self._df['Detections'].apply(lambda x: self._flattenDetections(x, confchange))
+		detections = self._df['_Detections'].apply(lambda x: self._flattenDetections(x, confchange))
 		self._df['Detections' if inplace else 'Detection'] = detections[0]
 		self._df['Modifiers'] = detections[1]
 		self._df['MSSP'] = detections[2]
@@ -161,7 +162,7 @@ class EnterpriseAPT29Eval():
 						arr.append(row['Major'])
 					if row['Detection'] == 'Technique':
 						self._techniques += 1
-				if 'powershell' in row['Procedure'].lower() and row['Detection'] == 'None':
+				if 'powershell' in row['_Procedure'].lower() and row['Detection'] == 'None':
 					self._powerfails +=1
 		if self._actionability == None:
 			self._efficiency = 1 - (self._alerts/self.steps)
@@ -272,7 +273,7 @@ def readout(results):
 		print(f'The product was unable to generate any alerts.\n')
 
 
-def write_xlsx(dfs, columns=['SubStep', 'Procedure', 'Tactic', 'TechniqueId', 'TechniqueName', 'Detection', 'Modifiers', 'MSSP', 'PowerShell']):
+def write_xlsx(dfs, columns=['_SubStep', '_Procedure', 'Tactic', 'TechniqueId', 'TechniqueName', 'Detection', 'Modifiers', 'MSSP', 'PowerShell']):
 	writer = pd.ExcelWriter(f'apt29eval.xlsx', engine='xlsxwriter')
 	results = pd.DataFrame(columns=['vendor', 		\
 									'alerts',		\
